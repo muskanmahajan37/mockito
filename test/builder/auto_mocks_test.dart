@@ -132,6 +132,44 @@ void main() {
     );
   });
 
+  test('generates a mock class with inherited members', () async {
+    await _expectSingleNonNullableOutput(
+      dedent(r'''
+      abstract class Base {
+        void b(String arg);
+      }
+
+      abstract class Foo extends Base {
+        void c(String arg);
+      }
+      '''),
+      _containsAllOf(
+        'void b(String? arg) => '
+            'super.noSuchMethod(Invocation.method(#b, [arg]));',
+        'void c(String? arg) => '
+            'super.noSuchMethod(Invocation.method(#c, [arg]));',
+      ),
+    );
+  });
+
+  test('generated mock classes respect type hierarchy', () async {
+    await _expectSingleNonNullableOutput(
+      dedent(r'''
+      abstract class B1 {
+        void b(String arg);
+      }
+
+      abstract class B2 implements B1 {
+        void b(String arg, {required String arg2});
+      }
+
+      abstract class Foo implements B2 {
+      }
+      '''),
+      _containsAllOf('void b(String? arg, {String? arg2})'),
+    );
+  });
+
   test('overrides methods, matching required positional parameters', () async {
     await _expectSingleNonNullableOutput(
       dedent(r'''
