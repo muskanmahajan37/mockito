@@ -1045,31 +1045,19 @@ extension on Element {
 }
 
 extension on ClassElement {
-  Iterable<ClassElement> _crawlSuperclasses() sync* {
-    final pendingClasses = [this];
-    final visitedClasses = <ClassElement>{};
-
-    while (pendingClasses.isNotEmpty) {
-      final currentClass = pendingClasses.removeLast();
-      if (currentClass.isDartCoreObject) continue;
-
-      visitedClasses.add(currentClass);
-      yield currentClass;
-
-      for (final superInterface in currentClass.allSupertypes) {
-        final definingElement = superInterface.element;
-        if (!visitedClasses.contains(definingElement)) {
-          pendingClasses.add(definingElement);
-        }
-      }
-    }
-  }
-
   /// Returns all methods inherited or defined by this class.
   Iterable<MethodElement> findAllMethods() {
     final foundByName = <String, MethodElement>{};
 
-    for (final superClass in _crawlSuperclasses()) {
+    final classesToConsider = [
+      this,
+      for (final superInterface in allSupertypes) superInterface.element
+    ];
+
+    for (final superClass in classesToConsider) {
+      // Don't explicitly implement Object
+      if (superClass.isDartCoreObject) continue;
+
       final methods =
           superClass.methods.where((m) => !m.isStatic && !m.isPrivate);
 
